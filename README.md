@@ -7,8 +7,8 @@ This project is sponsored by the [DeFiHackLabs AI Credits Initiative](https://x.
 
 ## Requirements
 
-- Alchemy API key, trace fetching (paid), set as `ALCHEMY_API_KEY`.
-- Etherscan API key, source/ABI lookup, set as `ETHERSCAN_API_KEY`.
+- Alchemy API key for trace fetching (paid feature), set as `ALCHEMY_API_KEY`.
+- Etherscan API key for source/ABI lookup, set as `ETHERSCAN_API_KEY`.
 - Foundry, for running generated PoCs with `forge test`.
 
 
@@ -17,7 +17,7 @@ This project is sponsored by the [DeFiHackLabs AI Credits Initiative](https://x.
 Open this repo as the agent root folder, then ask for `$tx2poc` with a chain name and tx hash:
 
 ```txt
-Use $tx2poc for chain ethereum and tx 0x...
+$tx2poc eth 0x1234...<txid>
 ```
 
 The skill handles trace fetching, evidence, role decisions, analysis, PoC authoring, and verification. Output goes under `cases/<case>/`.
@@ -39,16 +39,19 @@ The skill handles trace fetching, evidence, role decisions, analysis, PoC author
 - `cases/basetest.sol`, `cases/interface.sol`, `cases/StableMath.sol`, `cases/tokenhelper.sol`: shared Solidity helpers.
 - `tests/`: offline Python tests for tx2poc helper scripts.
 - `.agents/skills/tx2poc/`: live Codex skill, scripts, data, and references.
-- `DeFiHackLabs/`: external reference corpus. Do not write generated tx2poc output here.
+- `DeFiHackLabs/`: external reference corpus submodule.
+- `lib/forge-std/`: Foundry test dependency submodule.
 
-## DeFiHackLabs Submodule
+## Submodules
+
+This repo uses git submodules for reference material and Foundry dependencies. After cloning:
 
 ```bash
-git submodule update --remote --merge DeFiHackLabs
+git submodule update --init --recursive
 ```
 
 ## Limitations
 
-- Not plug-and-play portable. It depends on Foundry, API keys, RPC behavior, and this repo layout.
+- Portable with setup, but not zero-install. It needs Foundry, forge-std, the shared helper files, API keys.
 - Trace fetching requires paid Alchemy access.
-- Not 100% accurate. Generated analysis and PoCs still need human review.
+- Large or complex tx traces may be incomplete or inaccurate. Generated analysis and PoCs still need human review.

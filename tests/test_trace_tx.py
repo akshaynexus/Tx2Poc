@@ -24,6 +24,16 @@ def test_resolve_case_dir_must_be_direct_child_of_cases() -> None:
         trace_tx.resolve_case_dir("cases/example-case/nested")
 
 
+def test_set_workspace_root_controls_case_dir(tmp_path) -> None:
+    original_root = trace_tx.REPO_ROOT
+    try:
+        trace_tx.set_workspace_root(str(tmp_path))
+        case_dir = trace_tx.resolve_case_dir("cases/example-case")
+        assert case_dir == (tmp_path / "cases" / "example-case").resolve()
+    finally:
+        trace_tx.set_workspace_root(str(original_root))
+
+
 def test_selector_from_input() -> None:
     assert trace_tx.selector_from_input("0x12345678abcd") == "0x12345678"
     assert trace_tx.selector_from_input("0x1234") is None

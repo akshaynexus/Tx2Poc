@@ -5,7 +5,7 @@ Use these only when the trace leaves an important gap.
 ## Calldata
 
 ```bash
-python scripts/decode_calldata.py <0x_calldata>
+python "$SKILL_DIR/scripts/decode_calldata.py" <0x_calldata>
 ```
 
 ## Function Selector
@@ -17,9 +17,9 @@ curl -s "https://www.4byte.directory/api/v1/signatures/?hex_signature=<0xselecto
 ## Token Metadata
 
 ```bash
-cast call <token> "symbol()(string)" --rpc-url <chain>
-cast call <token> "name()(string)" --rpc-url <chain>
-cast call <token> "decimals()(uint8)" --rpc-url <chain>
+cast call <token> "symbol()(string)" --rpc-url <rpc_url_or_foundry_alias>
+cast call <token> "name()(string)" --rpc-url <rpc_url_or_foundry_alias>
+cast call <token> "decimals()(uint8)" --rpc-url <rpc_url_or_foundry_alias>
 ```
 
 ## State-Sensitive Address Probe
@@ -27,7 +27,7 @@ cast call <token> "decimals()(uint8)" --rpc-url <chain>
 Use when attacker-controlled address state may matter, such as self-call, delegatecall/EIP-7702-like execution, custom credit/lock/epoch accounting, or balance/credit/allowance failures.
 
 ```bash
-python scripts/state_probe.py \
+python "$SKILL_DIR/scripts/state_probe.py" \
   --chain <chain> \
   --block <fork_block> \
   --address <attacker_or_attack_contract> \
@@ -44,7 +44,7 @@ Custom views are opt-in. Supported simple `uint view(address)` probes: `creditOf
 EIP-1967 implementation slot:
 
 ```bash
-cast storage <address> 0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc --rpc-url <chain>
+cast storage <address> 0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc --rpc-url <rpc_url_or_foundry_alias>
 ```
 
 Explorer source/metadata:

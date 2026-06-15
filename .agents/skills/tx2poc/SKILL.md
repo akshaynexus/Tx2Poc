@@ -7,12 +7,26 @@ Use this skill when the user provides an EVM chain and transaction hash and want
 
 ## Paths
 
-All paths are relative to the repo root.
+Use the current workspace root as the target repo. `$SKILL_DIR` is the directory containing this `SKILL.md`.
+When running shell examples, set `SKILL_DIR` to that absolute path or substitute the absolute path directly.
+
+Skill-owned paths are under `$SKILL_DIR`: `scripts/`, `references/`, `assets/`, `data/`.
+Workspace-owned paths are under the target repo root: `cases/`, `lib/`, generated artifacts, and Foundry config.
 
 - `$CASE_DIR`: direct child of `cases/`.
 - `$POC_FILE`: `$CASE_DIR/<poc_name>_exp.sol`.
 
 If identity is unknown, start with a provisional folder. After role decision, rename to `yyyy-mm-<poc_name>-<txprefix>` and keep all generated files together.
+
+## Workspace Setup
+
+Requires Foundry/Forge, git/network access when `forge-std` is missing, `ALCHEMY_API_KEY` for trace fetching, and `ETHERSCAN_API_KEY` for source/ABI lookup.
+
+Before fetching traces:
+
+- Run `python "$SKILL_DIR/scripts/setup_workspace.py"` from the workspace root.
+- This creates `cases/`, copies missing helper files, writes missing `foundry.toml`/`remappings.txt` from bundled assets, and installs missing `forge-std`.
+- Do not reinstall or overwrite existing helpers/config when they already exist.
 
 ## Workflow
 
@@ -23,7 +37,7 @@ Scripts write factual artifacts only. Codex writes roles, analysis, and Solidity
    Confirm the chain alias, RPC/key availability, and whether trace fetching can run.
 
    ```bash
-   python scripts/check_env.py --chain <chain> --fetch
+   python "$SKILL_DIR/scripts/check_env.py" --chain <chain> --fetch
    ```
 
    Stop if required fetch access is missing.
@@ -33,7 +47,7 @@ Scripts write factual artifacts only. Codex writes roles, analysis, and Solidity
    Fetch or reuse the transaction trace and write the script-owned files under `$CASE_DIR`.
 
    ```bash
-   python scripts/trace_tx.py --chain <chain> --tx <txhash> --output-dir $CASE_DIR
+   python "$SKILL_DIR/scripts/trace_tx.py" --chain <chain> --tx <txhash> --output-dir $CASE_DIR
    ```
 
    Expected output: `tx.json`, `receipt.json`, `block.json`, `trace.raw.json`, `trace.summary.txt`, and `tx_context.json`.
@@ -43,8 +57,8 @@ Scripts write factual artifacts only. Codex writes roles, analysis, and Solidity
    Decode important unknown calldata, or check metadata access before selective source/ABI/token queries.
 
    ```bash
-   python scripts/decode_calldata.py <0x_calldata>
-   python scripts/check_env.py --chain <chain> --metadata
+   python "$SKILL_DIR/scripts/decode_calldata.py" <0x_calldata>
+   python "$SKILL_DIR/scripts/check_env.py" --chain <chain> --metadata
    ```
 
    Use Etherscan/source/ABI/token metadata selectively for important undecoded contracts, proxy checks, tokens, or protocol behavior. Do not query just to add names.
@@ -56,7 +70,7 @@ Scripts write factual artifacts only. Codex writes roles, analysis, and Solidity
    - Trace shows `DELEGATECALL A -> B` and header/source link depends on it: check explorer proxy metadata or common proxy slots/functions.
    - Helper behavior affects control flow: inspect verified source/ABI.
 
-   See `references/evidence_commands.md` for command examples.
+   See `$SKILL_DIR/references/evidence_commands.md` for command examples.
 
 4. Decide exploit roles.
 
@@ -69,14 +83,14 @@ Scripts write factual artifacts only. Codex writes roles, analysis, and Solidity
    Before writing the PoC, probe pre-attack state only when trace/source suggests attacker address state affects behavior: self-call, attacker `DELEGATECALL`, EIP-7702-like execution, or `msg.sender`-keyed balances, credits, locks, debts, or allowances.
 
    ```bash
-   python scripts/state_probe.py --chain <chain> --block <fork_block> --address <address> --token <token>
+   python "$SKILL_DIR/scripts/state_probe.py" --chain <chain> --block <fork_block> --address <address> --token <token>
    ```
 
    Candidate addresses include tx sender, tx target/root attack contract, profit receiver, delegatecall caller/code target, and helper contracts that already existed before the tx. Choose relevant tokens and simple address-keyed `uint view(address)` probes from the trace/source. Use protocol-specific `cast call` for other state. Use results to decide normal local helpers vs historical-address execution such as `vm.etch`.
 
 6. Author the analysis and PoC.
 
-   Explain the exploit path in `attack_analysis.md`, then create `$POC_FILE` from `references/poc_template.sol`.
+   Explain the exploit path in `attack_analysis.md`, then create `$POC_FILE` from `$SKILL_DIR/references/poc_template.sol`.
 
    Write the Solidity in three passes:
 
@@ -102,7 +116,7 @@ Scripts write factual artifacts only. Codex writes roles, analysis, and Solidity
 
 8. Review and iterate quality.
 
-   Read `references/good_poc_rules.md`. When subagents are available, ask one subagent to review `metadata.json`, `attack_analysis.md`, `$POC_FILE`, and factual trace artifacts against those rules. The review must explicitly flag magic numbers, especially hardcoded trace-exact irregular amounts. A fixable magic number is `needs work`, not `pass`; derive it or document why derivation is unreliable. Apply concrete fixes and rerun Forge. Repeat for at most 3 review/fix rounds.
+   Read `$SKILL_DIR/references/good_poc_rules.md`. When subagents are available, ask one subagent to review `metadata.json`, `attack_analysis.md`, `$POC_FILE`, and factual trace artifacts against those rules. The review must explicitly flag magic numbers, especially hardcoded trace-exact irregular amounts. A fixable magic number is `needs work`, not `pass`; derive it or document why derivation is unreliable. Apply concrete fixes and rerun Forge. Repeat for at most 3 review/fix rounds.
 
    If the PoC is still weak after 3 rounds, stop and tell the user which evidence, behavior, or quality rule still does not work.
 
@@ -157,7 +171,7 @@ Do not call an address a proxy from delegatecall alone. If proxy identity matter
 
 ## Format Conventions
 
-- Start from `references/poc_template.sol`. Always use `../basetest.sol`; import `../interface.sol`, `../StableMath.sol`, or `../tokenhelper.sol` only when used. For common interfaces such as ERC20, WETH, pairs, pools, routers, or Balancer, check `../interface.sol` before writing a local interface.
+- Start from `$SKILL_DIR/references/poc_template.sol`. Always use `../basetest.sol`; import `../interface.sol`, `../StableMath.sol`, or `../tokenhelper.sol` only when used. For common interfaces such as ERC20, WETH, pairs, pools, routers, or Balancer, check `../interface.sol` before writing a local interface.
 - Use this Solidity header shape: `@KeyInfo` with `Attacker`, `Attack Contract`, `Vulnerable Contract`, and `Attack Tx`; then `@Info`; then short `@Analysis`. Format `@KeyInfo - Total Lost :` from the real transaction impact, with at most two decimals and a unit.
 - Keep social/reference link lines in `@Analysis`; the link value may be empty. Insert one empty comment line before the PoC summary/root-cause comments.
 - For proxy/delegatecall-based contracts, use the confirmed implementation/source address for the `Vulnerable Contract` header. Mention the proxy/entry address in analysis, labels, or metadata when it matters to the PoC.
@@ -195,6 +209,7 @@ Before finalizing, check:
 
 ## Script Map
 
+- `setup_workspace.py`: prepare a workspace by adding missing Foundry config, shared helpers, and `forge-std`.
 - `check_env.py`: environment preflight.
 - `trace_tx.py`: fetch trace, normalize it, and write summary/context artifacts.
 - `decode_calldata.py`: decode one calldata payload.
@@ -205,3 +220,7 @@ Before finalizing, check:
 - `references/poc_template.sol`: starting Solidity template.
 - `references/good_poc_rules.md`: final quality review checklist.
 - `references/evidence_commands.md`: command examples for selective evidence checks.
+
+## Assets
+
+- `assets/foundry-helpers/`: shared Solidity helpers plus Foundry config/remapping templates for workspace setup.

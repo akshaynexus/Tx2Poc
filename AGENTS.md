@@ -11,6 +11,7 @@ Use the live skills for workflow details. Do not use ad hoc workflow rules from 
 
 ## Basics
 
+- This repo already provides the expected layout, shared helpers, and `forge-std` submodule.
 - Case output lives under `cases/<case>/`.
 - Shared Solidity helpers live at `cases/basetest.sol`, `cases/interface.sol`, `cases/StableMath.sol`, and `cases/tokenhelper.sol`.
 - Python scripts fetch and normalize evidence only.
@@ -28,6 +29,15 @@ python .agents/skills/tx2poc/scripts/check_env.py --chain <chain> --fetch
 python .agents/skills/tx2poc/scripts/trace_tx.py --chain <chain> --tx <txhash> --output-dir cases/<case>
 forge test --match-path cases/<case>/<poc_name>_exp.sol -vv
 python -m pytest tests -q
+```
+
+## Submodules
+
+```bash
+git submodule update --init --recursive
+git submodule update --remote --merge DeFiHackLabs lib/forge-std
+git add DeFiHackLabs lib/forge-std
+git commit -m "chore: update submodules"
 ```
 
 ## Guardrails

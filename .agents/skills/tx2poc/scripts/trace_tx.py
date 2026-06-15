@@ -191,12 +191,21 @@ STATIC_OUTPUT_ARGS = {
 def find_repo_root(start: Path) -> Path:
     for path in (start, *start.parents):
         if (path / "foundry.toml").exists() and (path / "cases").exists():
-            return path
-    return SKILL_ROOT.parents[2]
+            return path.resolve()
+    return start.resolve()
 
 
-REPO_ROOT = find_repo_root(SKILL_ROOT)
+REPO_ROOT = find_repo_root(Path.cwd())
 CASE_ROOT = REPO_ROOT / "cases"
+
+
+def set_workspace_root(workspace_root: str | None) -> None:
+    global REPO_ROOT, CASE_ROOT
+    if workspace_root:
+        REPO_ROOT = Path(workspace_root).expanduser().resolve()
+    else:
+        REPO_ROOT = find_repo_root(Path.cwd())
+    CASE_ROOT = REPO_ROOT / "cases"
 
 
 def canonical_chain(chain: str) -> str:
@@ -1291,9 +1300,11 @@ def main() -> int:
     parser.add_argument("--chain", required=True, help="Chain name")
     parser.add_argument("--tx", required=True, help="Transaction hash")
     parser.add_argument("--output-dir", required=True, help="Case folder directly under cases/")
+    parser.add_argument("--workspace-root", help="Workspace/repo root; defaults to the current directory")
     parser.add_argument("--force", action="store_true", help="Refetch even if trace.raw.json exists")
     args = parser.parse_args()
 
+    set_workspace_root(args.workspace_root)
     chain = canonical_chain(args.chain)
     case_dir = resolve_case_dir(args.output_dir)
     case_dir.mkdir(parents=True, exist_ok=True)
