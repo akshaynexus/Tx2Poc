@@ -31,6 +31,30 @@ def test_decode_approve() -> None:
     assert "raw_calldata" not in decoded
 
 
+def test_decode_overloaded_approve_uses_generic_names() -> None:
+    amount = 1
+    expires = 2
+    calldata = "0x5d35a3d9" + hex(amount)[2:].rjust(64, "0") + hex(expires)[2:].rjust(64, "0")
+
+    decoded = decode_calldata.decode(calldata)
+
+    assert decoded["selector"] == "0x5d35a3d9"
+    assert decoded["signature"] == "approve(uint256,uint256)"
+    assert decoded["decoded"] == {"arg0": amount, "arg1": expires}
+
+
+def test_decode_fixed_bytes_arg() -> None:
+    interface_id = "01ffc9a7"
+    calldata = "0x01ffc9a7" + interface_id.ljust(64, "0")
+
+    decoded = decode_calldata.decode(calldata)
+
+    assert decoded["selector"] == "0x01ffc9a7"
+    assert decoded["signature"] == "supportsInterface(bytes4)"
+    assert decoded["decoded"] == {"interfaceId": "0x01ffc9a7"}
+    assert "raw_calldata" not in decoded
+
+
 def test_unknown_selector_keeps_raw_calldata() -> None:
     calldata = "0x12345678" + "00" * 32
 

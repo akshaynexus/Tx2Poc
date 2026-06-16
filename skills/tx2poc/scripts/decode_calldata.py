@@ -10,18 +10,12 @@ from typing import Any
 SCRIPT_DIR = Path(__file__).resolve().parent
 SIGNATURES_PATH = SCRIPT_DIR.parent / "data" / "common_signatures_2k.json"
 
-CUSTOM_DECODER_SIGNATURES = {
-    "0x945bcec9": "batchSwap(uint8,(bytes32,uint256,uint256,uint256,bytes)[],address[],(address,bool,address,bool),int256[],uint256)",
-    "0x2df2c7c0": "updateTokenRateCache(address)",
-}
-
 
 def load_signatures() -> dict[str, str]:
     signatures: dict[str, str] = {}
     if SIGNATURES_PATH.exists():
         with SIGNATURES_PATH.open("r", encoding="utf-8") as handle:
             signatures.update(json.load(handle))
-    signatures.update(CUSTOM_DECODER_SIGNATURES)
     return signatures
 
 
@@ -73,6 +67,105 @@ def bytes_at(data: str, offset: int) -> str:
     if end > len(data):
         raise ValueError(f"ABI bytes at byte offset {offset} is out of bounds")
     return "0x" + data[start:end]
+
+
+def function_name(signature: str) -> str:
+    return signature.split("(", 1)[0]
+
+
+def function_arg_types(signature: str) -> list[str]:
+    start = signature.index("(") + 1
+    end = signature.rindex(")")
+    args = signature[start:end]
+    if not args:
+        return []
+    return split_top_level_args(args)
+
+
+def split_top_level_args(args: str) -> list[str]:
+    parts: list[str] = []
+    depth = 0
+    current: list[str] = []
+    for char in args:
+        if char == "," and depth == 0:
+            parts.append("".join(current))
+            current = []
+            continue
+        if char == "(":
+            depth += 1
+        elif char == ")":
+            depth -= 1
+        current.append(char)
+    if current:
+        parts.append("".join(current))
+    return parts
+
+
+def is_balancer_batch_swap(signature: str) -> bool:
+    return function_name(signature) == "batchSwap" and "(address,bool,address,bool)," in signature
+
+
+def static_arg_names(signature: str, arg_types: list[str]) -> list[str]:
+    known_names = {
+        "approve(address,uint256)": ["spender", "amount"],
+        "supportsInterface(bytes4)": ["interfaceId"],
+        "updateTokenRateCache(address)": ["token"],
+        "getPoolTokens(bytes32)": ["poolId"],
+    }.get(signature)
+    if known_names and len(known_names) == len(arg_types):
+        return known_names
+    return [f"arg{index}" for index in range(len(arg_types))]
+
+
+def fixed_bytes_size(abi_type: str) -> int | None:
+    if not abi_type.startswith("bytes") or abi_type == "bytes":
+        return None
+    size_text = abi_type[5:]
+    if not size_text.isdigit():
+        return None
+    size = int(size_text)
+    if not 1 <= size <= 32:
+        return None
+    return size
+
+
+def is_supported_static_type(abi_type: str) -> bool:
+    return (
+        abi_type in {"address", "bool", "bytes32"}
+        or fixed_bytes_size(abi_type) is not None
+        or abi_type == "int"
+        or (abi_type.startswith("int") and abi_type[3:].isdigit())
+        or abi_type == "uint"
+        or (abi_type.startswith("uint") and abi_type[4:].isdigit())
+    )
+
+
+def decode_static_type(args: str, abi_type: str, offset: int) -> Any:
+    if abi_type == "address":
+        return address_word(args, offset)
+    if abi_type == "bool":
+        return bool_word(args, offset)
+    fixed_size = fixed_bytes_size(abi_type)
+    if fixed_size is not None:
+        return "0x" + word(args, offset)[: fixed_size * 2]
+    if abi_type == "int" or (abi_type.startswith("int") and abi_type[3:].isdigit()):
+        return int_word(args, offset)
+    if abi_type == "uint" or (abi_type.startswith("uint") and abi_type[4:].isdigit()):
+        return uint_word(args, offset)
+    raise ValueError(f"unsupported static type {abi_type}")
+
+
+def decode_static_args(args: str, signature: str) -> dict[str, Any] | None:
+    arg_types = function_arg_types(signature)
+    if any("(" in arg_type or ")" in arg_type or "[" in arg_type or arg_type in {"bytes", "string"} for arg_type in arg_types):
+        return None
+    if not all(is_supported_static_type(arg_type) for arg_type in arg_types):
+        return None
+    names = static_arg_names(signature, arg_types)
+    return {
+        name: decode_static_type(args, abi_type, index * 32)
+        for index, (name, abi_type) in enumerate(zip(names, arg_types, strict=True))
+    }
 
 
 def address_array(data: str, offset: int) -> list[str]:
@@ -230,21 +323,6 @@ def step_pattern_dict(step: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def decode_approve(args: str) -> dict[str, Any]:
-    return {
-        "spender": address_word(args, 0),
-        "amount": uint_word(args, 32),
-    }
-
-
-def decode_address_arg(args: str, name: str) -> dict[str, Any]:
-    return {name: address_word(args, 0)}
-
-
-def decode_bytes32_arg(args: str, name: str) -> dict[str, Any]:
-    return {name: "0x" + word(args, 0)}
-
-
 def decode(calldata: str) -> dict[str, Any]:
     calldata = clean_hex(calldata)
     selector = calldata[:10]
@@ -256,18 +334,17 @@ def decode(calldata: str) -> dict[str, Any]:
         "decoded": None,
     }
 
-    if selector == "0x945bcec9":
+    if signature and is_balancer_batch_swap(signature):
         result["decoded"] = decode_batch_swap(args)
         result["solidity_hint"] = (
             "Build IBalancerVault.batchSwap(kind, swaps, assets, funds, limits, deadline). "
             "Use poolIds to name pool constants and loopHints to avoid flat repeated step setters."
         )
-    elif selector == "0x095ea7b3":
-        result["decoded"] = decode_approve(args)
-    elif selector == "0x2df2c7c0":
-        result["decoded"] = decode_address_arg(args, "token")
-    elif selector == "0xf94d4668":
-        result["decoded"] = decode_bytes32_arg(args, "poolId")
+    elif signature:
+        result["decoded"] = decode_static_args(args, signature)
+        if result["decoded"] is None:
+            result["raw_calldata"] = calldata
+            result["reason"] = "signature uses dynamic or tuple arguments that this helper does not decode generically"
     else:
         result["raw_calldata"] = calldata
         result["reason"] = "selector is not supported by this helper"

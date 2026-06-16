@@ -19,16 +19,11 @@ Workspace-owned paths are under the target repo root: `cases/`, `lib/`, generate
 
 If identity is unknown, start with a provisional folder. After role decision, rename to `yyyy-mm-<poc_name>-<txprefix>`. Keep user-facing files in `$CASE_DIR`; keep script-owned factual artifacts and logs in `$EVIDENCE_DIR`.
 
-## Workspace Setup
+## Setup
 
-Requires Foundry/Forge, git/network access when `forge-std` is missing, `ALCHEMY_API_KEY` for trace fetching, and `ETHERSCAN_API_KEY` for source/ABI lookup.
+Requires Foundry/Forge, `ALCHEMY_API_KEY` for trace fetching, and `ETHERSCAN_API_KEY` for source/ABI lookup.
 
-Before fetching traces:
-
-- Run `python "$SKILL_DIR/scripts/setup_workspace.py"` from the workspace root.
-- This creates `cases/`, copies missing helper files, writes missing `foundry.toml`/`remappings.txt` from bundled assets, and installs missing `forge-std`.
-- `setup_workspace.py` installs the current `forge-std` when missing. Use `--forge-std-ref <tag-or-commit>` only when the user explicitly asks for a pinned dependency.
-- Do not reinstall or overwrite existing helpers/config when they already exist.
+For a fresh or broken workspace, read `$SKILL_DIR/references/workspace_setup.md`. If helpers, Foundry config, remappings, and `forge-std` are already present, skip setup and start the workflow.
 
 ## Workflow
 
@@ -202,6 +197,7 @@ Detailed format and quality rules live in `$SKILL_DIR/references/good_poc_rules.
 
 - `references/poc_template.sol`: starting Solidity template.
 - `references/good_poc_rules.md`: detailed PoC quality checklist.
+- `references/workspace_setup.md`: setup command, options, and when to run it.
 - `references/evidence_commands.md`: command examples for selective evidence checks.
 
 ## Assets
