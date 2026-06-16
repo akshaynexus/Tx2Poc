@@ -75,7 +75,7 @@ Scripts write factual artifacts only. Codex writes roles, analysis, and Solidity
 
 4. Decide exploit roles.
 
-   Use `tx_context.json`, `trace.summary.txt`, calldata, and selective evidence to identify attacker, attack contract, vulnerable contract, victim, fork block, and PoC name. Inspect `delegatecall_pairs` for entry/state versus code-target roles, and inspect `call_evidence` for important helper scopes before writing the PoC.
+   Use `$EVIDENCE_DIR/tx_context.json`, `$EVIDENCE_DIR/trace.summary.txt`, calldata, and selective evidence to identify attacker, root/coordinator contract, attack receiver/helper contracts, vulnerable contract, victim, fork block, final profit asset/receiver, and PoC name. Inspect `delegatecall_pairs` for entry/state versus code-target roles, inspect `call_evidence` for important helper scopes, and trace the final profit transfer path before writing the PoC.
 
    Expected output: `metadata.json`.
 
@@ -95,7 +95,7 @@ Scripts write factual artifacts only. Codex writes roles, analysis, and Solidity
 
    Write the Solidity in three passes:
 
-  - Structure pass: set imports, main test contract, helper contracts, function names, callbacks, fork, labels, and ordered key calls. Preserve trace call order and observed read sources here.
+   - Structure pass: set imports, main test contract, helper contracts, function names, callbacks, fork, labels, ordered key calls, and final profit forwarding. Preserve trace call order and observed read sources here.
    - Detail pass: fill typed calls, parameters, derived amounts, callback data, funding, repayment, and assertions. Derive values from the same-scope args, call outputs, balances, reserves, or state reads seen in the trace when available.
    - Polish pass: add short `step N:` comments, remove temporary scaffolding, check naming/style, and ensure no placeholders remain.
 
@@ -157,6 +157,7 @@ Write `metadata.json` after deciding:
 - `attack_contract`: attacker-controlled contract driving the call track.
 - `vulnerable_contract`: real vulnerable implementation/source address when a proxy is confirmed; otherwise the protocol address whose behavior is exploited.
 - `victim`: fund-losing account/entity only when distinct and trace-supported.
+- `block_miner`: `block.json.miner` / block beneficiary when present.
 
 Do not mark routers, pairs, proxies, or public executors as vulnerable only because calls pass through them. If no distinct victim exists, set victim to the vulnerable contract. In proxy/state-escrow cases, the victim or asset-holder can be the entry/state proxy even when `vulnerable_contract` is the confirmed implementation/source address.
 

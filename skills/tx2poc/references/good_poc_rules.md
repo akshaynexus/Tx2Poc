@@ -14,7 +14,8 @@ Use this checklist for final review. Keep feedback concrete and limited to issue
 - If core identity, ABI/source, helper behavior, or exact address behavior is unclear, report the blocker instead of inventing names or opaque fallbacks.
 - `attack_analysis.md` only claims phases that appear in the PoC, unless an omission is explicit and justified.
 - Preserve core economics: asset provenance, callbacks, phase order, repeated state-dependent actions, and final profit path.
-- If the trace has a clear final profit receiver, the PoC should forward profit there and assert that receiver's balance change. Local test receivers need an explicit reason.
+- If the trace has a clear final profit receiver, the PoC should forward profit there and assert that receiver's balance change. If the trace forwards funds through an attacker-controlled root/coordinator before reaching the final receiver, reproduce that forwarding step. Local test receivers need an explicit reason.
+- Document `block_miner` from block data in `metadata.json`. Do not mark the block miner / block builder as `attacker`, `profit_receiver`, `refund_receiver`, or `victim` based only on a final native-token transfer to that address; classify that transfer as `builder_payment` or `coinbase_payment`.
 - Use `deal` only for initial capital or non-core setup, not to replace protocol-acquired funds.
 - Use a normal local attacker/helper unless source or trace proves exact historical `address(this)` behavior matters.
 - A tx trace cannot prove `for` vs `while`. Use `for` when the repeat count is a known fixed procedure. Use `while` when the repeat count should come from changing state: balances, reserves, price, debt, collateral, or output amount.
@@ -27,9 +28,11 @@ Use this checklist for final review. Keep feedback concrete and limited to issue
 ## Format
 
 - Keep the main `BaseTestWithBalanceLog` contract first.
+- Name the main test contract `ContractTest`; do not use lower snake case names such as `<poc_name>_exp` for Solidity contract names.
 - Preserve official short-symbol casing.
 - Avoid leading underscores in authored helper names.
 - Add short `step N:` comments for key phases.
+- Use `vm.createSelectFork("<chain-alias>", forkBlock)` with a local `forkBlock`; do not hardcode provider URLs in Solidity.
 
 ## Calldata
 
@@ -46,6 +49,7 @@ Use this checklist for final review. Keep feedback concrete and limited to issue
 - Native-token amounts may come from `address(target).balance`. `callTracer` does not show this opcode read, so use trace value movement as evidence when a native market/account sends the same amount later.
 - Avoid exact trace-profit assertions unless exact value equality is the exploit property. Prefer threshold/range assertions such as `assertGt(profit, expectedMinimum)` so the PoC proves impact without overfitting dust-level trace output.
 - Keep clean setup amounts near the step that uses them; promote numbers to constants only when reused, protocol-configured, or clarifying a formula.
+- Do not put fork blocks, flash-loan amounts, seed amounts, minimum-profit thresholds, trace-exact amounts, or one-off selectors at file scope.
 
 ## Review Output
 

@@ -29,7 +29,8 @@ interface IVulnerableContract {
 
 contract ContractTest is BaseTestWithBalanceLog {
     function setUp() public {
-        vm.createSelectFork("mainnet", 15460093);
+        uint256 forkBlock = 15_460_093;
+        vm.createSelectFork("mainnet", forkBlock);
         vm.label(ATTACKER, "Attacker");
         vm.label(ATTACK_CONTRACT, "Attack Contract");
         vm.label(VULNERABLE_CONTRACT, "Vulnerable Contract");
