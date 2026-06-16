@@ -174,43 +174,20 @@ For multi-contract protocols, record separate roles when useful: exploited entry
 
 Do not call an address a proxy from delegatecall alone. If proxy identity matters for the PoC header, source link, or interface choice, confirm it with source/explorer metadata, EIP-1967/beacon/admin slots, `implementation()`/`admin()` style functions, or a strong repeated fallback-delegate pattern.
 
-## Format Conventions
+## PoC Authoring Guardrails
 
-- Start from `$SKILL_DIR/references/poc_template.sol`. Always use `../basetest.sol`; import `../interface.sol`, `../StableMath.sol`, or `../tokenhelper.sol` only when used. For common interfaces such as ERC20, WETH, pairs, pools, routers, or Balancer, check `../interface.sol` before writing a local interface.
-- Use this Solidity header shape: `@KeyInfo` with `Attacker`, `Attack Contract`, `Vulnerable Contract`, and `Attack Tx`; then `@Info`; then short `@Analysis`. Format `@KeyInfo - Total Lost :` from the real transaction impact, with at most two decimals and a unit.
-- Keep social/reference link lines in `@Analysis`; the link value may be empty. Insert one empty comment line before the PoC summary/root-cause comments.
-- For proxy/delegatecall-based contracts, use the confirmed implementation/source address for the `Vulnerable Contract` header. Mention the proxy/entry address in analysis, labels, or metadata when it matters to the PoC.
-- Put the main test contract that inherits `BaseTestWithBalanceLog` before helper contracts.
-- Add short comments for key phases, formatted as `step 1: ...`, `step 2: ...`, etc.
-- Do not use leading underscores in authored function names, including private/internal helpers, unless required by an existing interface.
-- Preserve official token/protocol casing in `poc_name`, folder names, Solidity contract names, and file names when the name is a short symbol such as `SATX`, `USDC`, `GHO`, or `WETH`. Use lowercase only for generic descriptive names.
-- Keep declarations scoped to the contract/helper that uses them. File-scope declarations are for shared addresses and interfaces.
-- Keep numeric values near the logic that uses them. Only promote a number to a contract constant when it is reused across phases, names a protocol configuration, or improves a non-obvious formula. Clean setup amounts may stay inline or as local variables.
+Detailed format and quality rules live in `$SKILL_DIR/references/good_poc_rules.md`. Keep this section to early decisions that shape the PoC.
 
-## PoC Conventions
-
-- Fork at `tx_block - 1`.
-- Treat incomplete recon as a blocker. If a core token/protocol/vulnerable contract identity, ABI/source/helper behavior, or address-sensitive behavior cannot be resolved well enough to name roles and write typed calls, stop and report the missing evidence instead of inventing address-prefix names or opaque fallbacks.
-- Prefer readable reconstruction over opaque replay:
-  - Use typed contract calls with named interfaces, addresses, and local variables.
-  - Do not copy transaction input, large raw calldata blobs, or raw helper/orchestrator replay.
-  - Build calldata or bytes from readable primitives. For ASCII callback markers, use forms like `bytes("1")`; for protocol-encoded data, use `abi.encode` or `abi.encodePacked` with named values.
-  - Derive trace-exact irregular amounts from balances, reserves, allowances, function parameters, or return values. For no-arg helper calls, source changing amounts inside the helper scope from `call_evidence` or local reads. Use fixed trace amounts only when there is no reliable state-derived source.
-- Rebuild attacker-controlled execution locally. Do not delegate the core exploit to historical attacker/coordinator/helper contracts.
-- In PoC code, call the entry/state address seen in the trace. Use implementation/code-target evidence for interfaces, labels, and source links; do not call the implementation directly unless the trace does.
-- Do not force local attacker or attack-contract addresses to match the trace. Use `vm.etch` at a historical address only when source or trace evidence shows exact `address(this)` behavior matters.
-- Preserve core economics at a high level: asset provenance, callbacks, phase order, and state-dependent repetition should match the trace when they matter to the exploit.
-- A tx trace cannot prove `for` vs `while`. Use `for` when the repeat count is a known fixed procedure. Use `while` when the repeat count should come from changing state: balances, reserves, price, debt, collateral, or output amount.
-- Use `deal` only for explicit initial capital or non-core setup. Do not use it to replace protocol-acquired funds.
-- Final profit handling should follow the trace's final asset and receiver role. If the trace has a clear final profit receiver, forward profit there and assert that receiver's balance change. Use a local test receiver only when the trace receiver is unclear or intentionally abstracted, and explain why.
-
-Before finalizing, check:
-
-- no placeholders or empty tests.
-- no raw transaction input or opaque calldata replay.
-- every exploit/profit phase named in `attack_analysis.md` appears in `$POC_FILE`, unless the analysis explicitly says that phase is intentionally omitted and why.
-- key vulnerable calls and callbacks are present or the omission is explained.
-- profit or state-change assertion passes.
+- Start from `$SKILL_DIR/references/poc_template.sol`; import shared helpers only when used, and check `../interface.sol` before writing common local interfaces.
+- Name the main test contract `ContractTest` and put the `BaseTestWithBalanceLog` contract before helper contracts.
+- Fork at `tx_block - 1` with `vm.createSelectFork("<chain-alias>", forkBlock);`. Do not build provider URLs in Solidity.
+- Treat unresolved core identity, ABI/source, helper behavior, or address-sensitive behavior as a blocker.
+- Prefer typed, readable reconstruction over raw transaction input, large calldata blobs, or opaque replay.
+- Derive irregular trace amounts from nearby balances, reserves, allowances, call outputs, parameters, or state reads when reliable.
+- Rebuild attacker-controlled execution with local helpers. Use historical addresses only when evidence shows exact address behavior matters.
+- Call the trace entry/state address. Use implementation/code-target evidence for interfaces, labels, and source links.
+- Preserve core economics: asset provenance, callbacks, phase order, state-dependent repetition, final forwarding, and profit/state assertion.
+- Keep declarations and numeric values scoped near the logic that uses them.
 
 ## Script Map
 
@@ -223,7 +200,7 @@ Before finalizing, check:
 ## References
 
 - `references/poc_template.sol`: starting Solidity template.
-- `references/good_poc_rules.md`: final quality review checklist.
+- `references/good_poc_rules.md`: detailed PoC quality checklist.
 - `references/evidence_commands.md`: command examples for selective evidence checks.
 
 ## Assets
