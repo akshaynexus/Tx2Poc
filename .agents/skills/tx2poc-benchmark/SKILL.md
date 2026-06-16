@@ -40,9 +40,9 @@ The subagent must discover all roles and write all generated artifacts from live
 4. The subagent generates or updates the case under `cases/<case>/` and returns the generated case path.
 5. After the generated PoC exists, the benchmark driver may inspect:
    - generated `_exp.sol`
-   - `trace.summary.txt`
+   - `evidence/trace.summary.txt`
    - `attack_analysis.md`
-   - `metadata.json`, `generation_notes.md`, and `final_review.md` when present
+   - `metadata.json`, `evidence/generation_notes.md`, and `final_review.md` when present
    - `tx2poc`'s `references/good_poc_rules.md`
    - same-tx DeFiHackLabs reference PoC
 6. Write the benchmark result under `cases/<case>/benchmark/`.

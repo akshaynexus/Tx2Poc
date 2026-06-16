@@ -40,8 +40,8 @@ Use this checklist for final review. Keep feedback concrete and limited to issue
 
 ## Magic Numbers
 
-- Any fixable hardcoded trace-exact irregular amount is `needs work`, not `pass`. Derive it from balances, reserves, allowances, function parameters, return values, or other state reads when a reasonable source exists. Retain a fixed value only after derivation was attempted and unreliable; keep it local and record the trace/source and reason in `generation_notes.md`.
-- Use `tx_context.json.call_evidence` before keeping an irregular amount. If a helper call has no amount parameter, derive the amount inside that helper from same-scope call outputs, balances, reserves, or state reads.
+- Any fixable hardcoded trace-exact irregular amount is `needs work`, not `pass`. Derive it from balances, reserves, allowances, function parameters, return values, or other state reads when a reasonable source exists. Retain a fixed value only after derivation was attempted and unreliable; keep it local and record the trace/source and reason in `evidence/generation_notes.md`.
+- Use `evidence/tx_context.json.call_evidence` before keeping an irregular amount. If a helper call has no amount parameter, derive the amount inside that helper from same-scope call outputs, balances, reserves, or state reads.
 - When the source of a magic amount is unclear, add temporary logs for likely sources before keeping it: caller balance, helper balance, pool balance, reserve values, allowance, callback delta, and repayment amount. Use those logs to test derivation candidates.
 - Native-token amounts may come from `address(target).balance`. `callTracer` does not show this opcode read, so use trace value movement as evidence when a native market/account sends the same amount later.
 - Avoid exact trace-profit assertions unless exact value equality is the exploit property. Prefer threshold/range assertions such as `assertGt(profit, expectedMinimum)` so the PoC proves impact without overfitting dust-level trace output.
@@ -67,11 +67,11 @@ When reporting a concrete PoC problem, include:
 
 ## Final Cleanup
 
-Before returning `pass`, remove temporary debug logs, probes, and one-off diagnostic variables from the PoC, then rerun Forge with `-vv` and save the final user-facing log to `poc_run.log`. Do not use `-vvvv` for the saved log.
+Before returning `pass`, remove temporary debug logs, probes, and one-off diagnostic variables from the PoC, then rerun Forge with `-vv` and save the final user-facing log to `evidence/poc_run.log`. Do not use `-vvvv` for the saved log.
 
 ## Generation Notes
 
-After review/fix rounds, the main agent writes `generation_notes.md` before returning the PoC:
+After review/fix rounds, the main agent writes `evidence/generation_notes.md` before returning the PoC:
 
 - `Environment`: RPC/explorer/test failures and fallbacks used.
 - `Evidence gaps`: unresolved identity, ABI/source, helper, or address-sensitive behavior gaps.
@@ -84,7 +84,7 @@ After review/fix rounds, the main agent writes `generation_notes.md` before retu
 After the last review/fix round, write `final_review.md` as the user-facing summary:
 
 - `Attack Summary`: concise exploit path and impact.
-- `Forge Result`: exact `forge test --match-path ... -vv` command and pass/fail result from `poc_run.log`.
+- `Forge Result`: exact `forge test --match-path ... -vv` command and pass/fail result from `evidence/poc_run.log`.
 - `Good PoC Rules Review`: final verdict and high-signal findings.
 - `Line-Specific Findings`: every remaining PoC issue with file path, line number, and a small code snippet; write `None` when no blocking issues remain.
 - `Remaining Weaknesses`: evidence gaps, fixture limitations, or intentional omissions that are not blockers.

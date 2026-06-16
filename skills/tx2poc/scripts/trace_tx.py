@@ -282,11 +282,15 @@ def rpc_call(url: str, method: str, params: list[Any]) -> Any:
     return payload["result"]
 
 
-def fetch_trace(chain: str, tx_hash: str, case_dir: Path, force: bool) -> None:
-    raw_path = case_dir / "trace.raw.json"
-    tx_path = case_dir / "tx.json"
-    receipt_path = case_dir / "receipt.json"
-    block_path = case_dir / "block.json"
+def evidence_dir(case_dir: Path) -> Path:
+    return case_dir / "evidence"
+
+
+def fetch_trace(chain: str, tx_hash: str, artifact_dir: Path, force: bool) -> None:
+    raw_path = artifact_dir / "trace.raw.json"
+    tx_path = artifact_dir / "tx.json"
+    receipt_path = artifact_dir / "receipt.json"
+    block_path = artifact_dir / "block.json"
     metadata_paths = [tx_path, receipt_path, block_path]
     if raw_path.exists() and all(path.exists() for path in metadata_paths) and not force:
         print(f"Skipping fetch; using existing {raw_path}")
@@ -355,8 +359,8 @@ def flatten_frame(
         flatten_frame(child, frame_id, depth + 1, counter, frames)
 
 
-def normalize_trace(case_dir: Path) -> list[dict[str, Any]]:
-    raw_path = case_dir / "trace.raw.json"
+def normalize_trace(artifact_dir: Path) -> list[dict[str, Any]]:
+    raw_path = artifact_dir / "trace.raw.json"
     require_files([raw_path])
     raw = read_json(raw_path)
     frames: list[dict[str, Any]] = []
@@ -917,7 +921,7 @@ def walk(
     process_children(children_map.get(frame_id, []), by_id, children_map, selector_map, lines, loop_summaries, subtree_cache)
 
 
-def write_summary_and_index(case_dir: Path, chain: str, tx_hash: str, frames: list[dict[str, Any]], selector_map: dict[str, str]) -> dict[str, Any]:
+def write_summary_and_index(artifact_dir: Path, chain: str, tx_hash: str, frames: list[dict[str, Any]], selector_map: dict[str, str]) -> dict[str, Any]:
     by_id = {frame["id"]: frame for frame in frames}
     children_map: dict[str, list[str]] = defaultdict(list)
     by_address: dict[str, list[str]] = defaultdict(list)
@@ -960,7 +964,7 @@ def write_summary_and_index(case_dir: Path, chain: str, tx_hash: str, frames: li
     body_lines: list[str] = []
     walk(root["id"], by_id, children_map, selector_map, body_lines, loop_summaries, subtree_cache)
     lines = header_lines + format_loop_hotspots(loop_summaries) + body_lines
-    (case_dir / "trace.summary.txt").write_text("\n".join(lines), encoding="utf-8")
+    (artifact_dir / "trace.summary.txt").write_text("\n".join(lines), encoding="utf-8")
     print(f"trace.summary.txt ({len(lines)} lines from {len(frames)} frames)")
     index_doc["loopSummaries"] = loop_summaries
     return index_doc
@@ -1249,9 +1253,9 @@ def build_role_candidates(chain: str, frames: list[dict[str, Any]], tx_data: dic
     }
 
 
-def write_context(case_dir: Path, chain: str, tx_hash: str, frames: list[dict[str, Any]], selector_map: dict[str, str], trace_index: dict[str, Any]) -> None:
-    tx_path = case_dir / "tx.json"
-    block_path = case_dir / "block.json"
+def write_context(case_dir: Path, artifact_dir: Path, chain: str, tx_hash: str, frames: list[dict[str, Any]], selector_map: dict[str, str], trace_index: dict[str, Any]) -> None:
+    tx_path = artifact_dir / "tx.json"
+    block_path = artifact_dir / "block.json"
     require_files([tx_path])
     tx_data = read_json(tx_path)
     block_data = read_json(block_path) if block_path.exists() else {}
@@ -1288,18 +1292,18 @@ def write_context(case_dir: Path, chain: str, tx_hash: str, frames: list[dict[st
         "delegatecall_pairs": build_delegatecall_pairs(frames, selector_map),
         "role_candidates": build_role_candidates(chain, frames, tx_data, selector_map),
         "artifacts": {
-            "trace_summary_file": repo_relative(case_dir / "trace.summary.txt"),
+            "trace_summary_file": repo_relative(artifact_dir / "trace.summary.txt"),
         },
     }
-    write_json(case_dir / "tx_context.json", context)
-    print(case_dir / "tx_context.json")
+    write_json(artifact_dir / "tx_context.json", context)
+    print(artifact_dir / "tx_context.json")
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Fetch and summarize an EVM transaction trace.")
     parser.add_argument("--chain", required=True, help="Chain name")
     parser.add_argument("--tx", required=True, help="Transaction hash")
-    parser.add_argument("--output-dir", required=True, help="Case folder directly under cases/")
+    parser.add_argument("--output-dir", required=True, help="Case folder directly under cases/; artifacts are written under evidence/")
     parser.add_argument("--workspace-root", help="Workspace/repo root; defaults to the current directory")
     parser.add_argument("--force", action="store_true", help="Refetch even if trace.raw.json exists")
     args = parser.parse_args()
@@ -1308,11 +1312,13 @@ def main() -> int:
     chain = canonical_chain(args.chain)
     case_dir = resolve_case_dir(args.output_dir)
     case_dir.mkdir(parents=True, exist_ok=True)
-    fetch_trace(chain, args.tx, case_dir, args.force)
-    frames = normalize_trace(case_dir)
+    artifact_dir = evidence_dir(case_dir)
+    artifact_dir.mkdir(parents=True, exist_ok=True)
+    fetch_trace(chain, args.tx, artifact_dir, args.force)
+    frames = normalize_trace(artifact_dir)
     selector_map = resolve_selectors(case_dir, frames)
-    trace_index = write_summary_and_index(case_dir, chain, args.tx, frames, selector_map)
-    write_context(case_dir, chain, args.tx, frames, selector_map, trace_index)
+    trace_index = write_summary_and_index(artifact_dir, chain, args.tx, frames, selector_map)
+    write_context(case_dir, artifact_dir, chain, args.tx, frames, selector_map, trace_index)
     return 0
 
 

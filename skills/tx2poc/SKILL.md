@@ -15,8 +15,9 @@ Workspace-owned paths are under the target repo root: `cases/`, `lib/`, generate
 
 - `$CASE_DIR`: direct child of `cases/`.
 - `$POC_FILE`: `$CASE_DIR/<poc_name>_exp.sol`.
+- `$EVIDENCE_DIR`: `$CASE_DIR/evidence`.
 
-If identity is unknown, start with a provisional folder. After role decision, rename to `yyyy-mm-<poc_name>-<txprefix>` and keep all generated files together.
+If identity is unknown, start with a provisional folder. After role decision, rename to `yyyy-mm-<poc_name>-<txprefix>`. Keep user-facing files in `$CASE_DIR`; keep script-owned factual artifacts and logs in `$EVIDENCE_DIR`.
 
 ## Workspace Setup
 
@@ -44,13 +45,13 @@ Scripts write factual artifacts only. Codex writes roles, analysis, and Solidity
 
 2. Build factual trace artifacts.
 
-   Fetch or reuse the transaction trace and write the script-owned files under `$CASE_DIR`.
+   Fetch or reuse the transaction trace. `trace_tx.py` takes the case folder as `--output-dir` and writes script-owned factual files under `$EVIDENCE_DIR`.
 
    ```bash
    python "$SKILL_DIR/scripts/trace_tx.py" --chain <chain> --tx <txhash> --output-dir $CASE_DIR
    ```
 
-   Expected output: `tx.json`, `receipt.json`, `block.json`, `trace.raw.json`, `trace.summary.txt`, and `tx_context.json`.
+   Expected output: `$EVIDENCE_DIR/tx.json`, `$EVIDENCE_DIR/receipt.json`, `$EVIDENCE_DIR/block.json`, `$EVIDENCE_DIR/trace.raw.json`, `$EVIDENCE_DIR/trace.summary.txt`, and `$EVIDENCE_DIR/tx_context.json`.
 
 3. Fill evidence gaps only when needed.
 
@@ -111,7 +112,7 @@ Scripts write factual artifacts only. Codex writes roles, analysis, and Solidity
    After the final passing run, capture the user-facing run log with `-vv`, not `-vvvv`.
 
    ```bash
-   forge test --match-path $POC_FILE -vv > $CASE_DIR/poc_run.log 2>&1
+   forge test --match-path $POC_FILE -vv > $EVIDENCE_DIR/poc_run.log 2>&1
    ```
 
 8. Review and iterate quality.
@@ -120,9 +121,9 @@ Scripts write factual artifacts only. Codex writes roles, analysis, and Solidity
 
    If the PoC is still weak after 3 rounds, stop and tell the user which evidence, behavior, or quality rule still does not work.
 
-   Write `generation_notes.md` with environment failures, evidence gaps, review rounds, fixes tried, remaining PoC flaws, and what to mention when returning the PoC.
+   Write `$EVIDENCE_DIR/generation_notes.md` with environment failures, evidence gaps, review rounds, fixes tried, remaining PoC flaws, and what to mention when returning the PoC.
 
-   Write user-facing `final_review.md` with a concise attack summary, the final Forge command/result, the final good-poc-rules verdict, remaining weaknesses, and reviewer feedback. When the review points out a PoC problem, include the file path, line number, and a small code snippet.
+   Write user-facing `final_review.md` with a concise attack summary, the final Forge command/result from `$EVIDENCE_DIR/poc_run.log`, the final good-poc-rules verdict, remaining weaknesses, and reviewer feedback. When the review points out a PoC problem, include the file path, line number, and a small code snippet.
 
 No `attack_plan.md` or other intermediate planning artifact.
 
@@ -130,20 +131,23 @@ No `attack_plan.md` or other intermediate planning artifact.
 
 Script-owned factual files:
 
-- `tx.json`, `receipt.json`, `block.json`, `trace.raw.json`
-- `trace.summary.txt`
-- `tx_context.json`
+- `evidence/tx.json`, `evidence/receipt.json`, `evidence/block.json`, `evidence/trace.raw.json`
+- `evidence/trace.summary.txt`
+- `evidence/tx_context.json`
 
-AI-owned files:
+User-facing AI-owned files:
 
 - `metadata.json`
 - `attack_analysis.md`
 - `<poc_name>_exp.sol`
-- `generation_notes.md`
-- `poc_run.log`
 - `final_review.md`
 
-`tx_context.json` is evidence, not final truth.
+Non-user-facing AI-owned files:
+
+- `evidence/generation_notes.md`
+- `evidence/poc_run.log`
+
+`evidence/tx_context.json` is evidence, not final truth.
 
 ## Role Decision
 
