@@ -38,17 +38,20 @@ The skill handles trace fetching, evidence, role decisions, analysis, PoC author
 - `cases/`: generated tx cases, factual artifacts, analysis, and PoCs.
 - `cases/basetest.sol`, `cases/interface.sol`, `cases/StableMath.sol`, `cases/tokenhelper.sol`: shared Solidity helpers.
 - `tests/`: offline Python tests for tx2poc helper scripts.
-- `.agents/skills/tx2poc/`: live Codex skill, scripts, data, and references.
-- `DeFiHackLabs/`: external reference corpus submodule.
+- `skills/tx2poc/`: portable tx2poc skill, scripts, data, and references.
+- `.agents/skills/`: repo-local Codex automation skills.
+- `DeFiHackLabs/`: gitignored local clone of the user's DeFiHackLabs fork, used by `defihacklabs-pr`.
 - `lib/forge-std/`: Foundry test dependency submodule.
 
 ## Submodules
 
-This repo uses git submodules for reference material and Foundry dependencies. After cloning:
+This repo uses a git submodule for the Foundry dependency. After cloning:
 
 ```bash
 git submodule update --init --recursive
 ```
+
+For DeFiHackLabs PR work, clone your fork into `DeFiHackLabs/` and add the official repo as `upstream`.
 
 ## Limitations
 

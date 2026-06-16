@@ -16,6 +16,7 @@ out/
 .tx2poc-evals/
 
 # Generated Foundry dependencies and tx cases
+DeFiHackLabs/
 lib/*
 !lib/forge-std/
 forge-out/

@@ -1,0 +1,4 @@
+interface:
+  display_name: "DeFiHackLabs PR"
+  short_description: "Export tx2poc cases to DeFiHackLabs PRs"
+  default_prompt: "Use $defihacklabs-pr to export a completed tx2poc case into DeFiHackLabs and open a draft PR."

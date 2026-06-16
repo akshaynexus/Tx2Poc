@@ -7,7 +7,7 @@ from types import ModuleType
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-TX2POC_SCRIPTS = REPO_ROOT / ".agents" / "skills" / "tx2poc" / "scripts"
+TX2POC_SCRIPTS = REPO_ROOT / "skills" / "tx2poc" / "scripts"
 
 
 def load_tx2poc_script(name: str) -> ModuleType:
