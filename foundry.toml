@@ -5,7 +5,7 @@ out = "forge-out"
 cache_path = "forge-cache"
 libs = ["lib"]
 fs_permissions = [{ access = "read", path = "./" }]
-evm_version = "shanghai"
+evm_version = "cancun"
 
 [rpc_endpoints]
 mainnet = "https://eth-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}"

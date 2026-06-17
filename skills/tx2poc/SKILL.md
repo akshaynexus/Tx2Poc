@@ -202,4 +202,10 @@ Detailed format and quality rules live in `$SKILL_DIR/references/good_poc_rules.
 
 ## Assets
 
-- `assets/foundry-helpers/`: shared Solidity helpers plus Foundry config/remapping templates for workspace setup.
+- `assets/foundry-helpers/`: read-only DeFiHackLabs `src/test` helper copies plus Foundry setup templates.
+- `assets/foundry-libs/`: minimal vendored Balancer dependencies for `StableMath.sol`.
+- Helper files:
+  - `basetest.sol`: `BaseTestWithBalanceLog` balance logging base.
+  - `interface.sol`: shared protocol and token interfaces.
+  - `StableMath.sol`: Balancer stable-pool math helper.
+  - `tokenhelper.sol`: `TokenHelper` ERC20 balance, approval, and transfer helpers.

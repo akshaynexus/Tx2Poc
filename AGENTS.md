@@ -20,6 +20,8 @@ Repo agent skills:
 - This repo already provides the expected layout, shared helpers, and `forge-std` submodule.
 - Case output lives under `cases/<case>/`.
 - Shared Solidity helpers live at `cases/basetest.sol`, `cases/interface.sol`, `cases/StableMath.sol`, and `cases/tokenhelper.sol`.
+- The four shared helpers and matching `.sol` files under `skills/tx2poc/assets/foundry-helpers/` are DeFiHackLabs `src/test` copies; do not edit them during case work.
+- After helper resync, check the four helper `.sol` files in both `cases/` and `skills/tx2poc/assets/foundry-helpers/` are up to date with DeFiHackLabs `src/test`.
 - Python scripts fetch and normalize evidence only.
 - Codex writes `metadata.json`, `attack_analysis.md`, `generation_notes.md`, and `<poc_name>_exp.sol`.
 

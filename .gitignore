@@ -19,6 +19,10 @@ out/
 DeFiHackLabs/
 lib/*
 !lib/forge-std/
+!lib/balancer-v2-solidity-utils/
+!lib/balancer-v2-solidity-utils/**
+!lib/balancer-v2-interfaces/
+!lib/balancer-v2-interfaces/**
 forge-out/
 forge-cache/
 cases/*
