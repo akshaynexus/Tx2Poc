@@ -152,6 +152,8 @@ No magic phrase. Read-only checks, fetches, and local tests do not need confirma
 
    Prefer the verified README Forge command if it differs.
 
+   Auth fallback: if `gh auth status` fails but `git push origin <branch>` succeeds, Git and `gh` are using different credentials. After GitHub write approval, prefer `gh pr create`, then the GitHub connector. If both fail, use the Git HTTPS credential helper only in memory for the single PR API request; never print, save, or commit the credential from `git credential fill`.
+
 ## Guardrails
 
 - Treat `DeFiHackLabs/` as a gitignored local clone of the user's fork, not as a TxAnalyzer submodule.
