@@ -15,7 +15,7 @@ After copying the final PoC to `src/test/YYYY-MM/`, run this inside the DeFiHack
 python add_new_entry.py
 ```
 
-Use it as the source of truth for README entries and the expected Forge command.
+Use it as the source of truth for entry text and the expected Forge command, but not for year-based README routing. The helper writes root `README.md`; DeFiHackLabs also keeps year-specific archive pages under `past/YYYY/README.md`.
 
 ## PR Format
 
@@ -36,7 +36,7 @@ Add TokenHolder PoC. Oct 7. 20 WBNB
 Body:
 
 ```text
-ref: {source: <tweet-or-source-link>}
+ref: source: <tweet-or-source-link>
 ```
 
 ## Workflow
@@ -52,6 +52,9 @@ ref: {source: <tweet-or-source-link>}
    cd DeFiHackLabs
    git status --short
    git remote -v
+   git config --get user.name
+   git config --get user.email
+   gh auth status
    ```
 
    Require a clean worktree, `origin` as the user's fork, and `upstream` as `SunWeb3Sec/DeFiHackLabs`.
@@ -82,6 +85,8 @@ ref: {source: <tweet-or-source-link>}
 
    Do not export unless the PoC is a passing, self-contained exploit test. Reject TODO/FIXME placeholders, compile-only tests, raw replay, trace-frame comments, an empty source/message line under `// @Analysis`, or an empty `// Twitter Guy` value.
 
+   Before writing to `DeFiHackLabs/`, show branch, file path, README target, PR title/body, then ask for explicit confirmation.
+
 6. Create a branch and copy only the final PoC.
 
    Derive `YYYY-MM` from `block.json`. Use the same timestamp in `add_new_entry.py`. Before copying, ensure the target path and PoC basename do not already exist.
@@ -109,17 +114,31 @@ ref: {source: <tweet-or-source-link>}
 
    Verify the README Forge command matches the case chain. Add required network flags, especially `--evm-version shanghai` for Base, optimism, or bsc when expected.
 
+   Then route the generated README entry to the year archive expected by DeFiHackLabs:
+
+   - Keep or add the root `README.md` table-of-contents link for the incident.
+   - For incidents whose year has `past/YYYY/README.md`, move the full incident entry from root `README.md` into `past/YYYY/README.md`.
+   - In root `README.md`, the incident link should point to `past/YYYY/README.md#<anchor>` instead of a same-file anchor.
+   - In `past/YYYY/README.md`, contract links must be relative to that file, e.g. `../../src/test/YYYY-MM/<poc_name>_exp.sol`.
+   - If `past/YYYY/README.md` does not exist, keep the full entry in root `README.md` unless the user explicitly wants a new archive file.
+   - Keep incident counters consistent in every README file edited.
+
+   Do not assume `add_new_entry.py` handles this routing; it defaults to root `README.md`.
+
 8. Test, commit, push, and open a draft PR.
 
    Use the PR title as the commit message. Derive `<owner>` from `origin`, not `upstream`.
+   Before any GitHub write, show one compact confirmation:
+   `account=<gh account/source> email=<commit email> remote=<owner/repo> branch=<branch> action=<push/pr/delete>`.
+   Require explicit approval for those exact values.
 
    ```bash
    forge test --contracts ./src/test/YYYY-MM/<poc_name>_exp.sol -vvv
-   git add src/test/YYYY-MM/<poc_name>_exp.sol README.md
+   git add src/test/YYYY-MM/<poc_name>_exp.sol README.md past/YYYY/README.md
    git commit -m "Add <Name> PoC. <Mon D>. <Lost Amount>"
    git push origin tx2poc/<case-or-victim>
    git remote get-url origin
-   gh pr create --repo SunWeb3Sec/DeFiHackLabs --base main --head <owner>:tx2poc/<case-or-victim> --title "Add <Name> PoC. <Mon D>. <Lost Amount>" --body "ref: {source: <tweet-or-source-link>}" --draft
+   gh pr create --repo SunWeb3Sec/DeFiHackLabs --base main --head <owner>:tx2poc/<case-or-victim> --title "Add <Name> PoC. <Mon D>. <Lost Amount>" --body "ref: source: <tweet-or-source-link>" --draft
    ```
 
    Prefer the verified README Forge command if it differs.
@@ -132,7 +151,10 @@ ref: {source: <tweet-or-source-link>}
 - Sync from `upstream` with fast-forward only before duplicate checks or branch creation.
 - Use a separate branch for each DeFiHackLabs PR.
 - After syncing latest upstream, stop if the attack transaction hash already appears in DeFiHackLabs.
+- Confirm with the user before writing files into `DeFiHackLabs/`.
+- Confirm before committing or any GitHub write: push, PR create/update/close, or remote branch delete. Do not require a magic phrase.
 - Use the attack timestamp from `block.json` for both the `src/test/YYYY-MM/` folder and the timestamp entered into `add_new_entry.py`.
+- Use the attack year from `block.json` to decide whether the full README incident entry belongs in `past/YYYY/README.md`. `add_new_entry.py` does not do this automatically.
 - Do not overwrite existing DeFiHackLabs PoCs or reuse an existing PoC basename.
 - Do not export PoCs with TODO/FIXME placeholders, compile-only tests, raw replay, trace-frame comments, an empty source/message line under `// @Analysis`, or an empty `// Twitter Guy` header value.
 - Copy only the final Solidity PoC into DeFiHackLabs. Do not copy tx2poc trace JSON, benchmark output, notes, or reviews.

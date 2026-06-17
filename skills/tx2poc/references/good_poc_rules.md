@@ -21,6 +21,8 @@ Use this checklist for final review. Keep feedback concrete and limited to issue
 - Use a normal local attacker/helper unless source or trace proves exact historical `address(this)` behavior matters.
 - A tx trace cannot prove `for` vs `while`. Use `for` when the repeat count is a known fixed procedure. Use `while` when the repeat count should come from changing state: balances, reserves, price, debt, collateral, or output amount.
 
+- `attack_contract` is the attacker-controlled contract that coordinates the effective exploit flow. Do not pick a thin deployer/wrapper only because it is first reached from the tx sender. If `attacker -> CREATE deployer -> CREATE main -> CALL main`, and `main` performs the flash loan/callback/exploit logic, use `main` as `attack_contract` and record the wrapper separately as `attack_deployer` or `root_deployer`.
+
 ## Address-Sensitive State
 
 - If the trace uses self-call, attacker `DELEGATECALL`, EIP-7702-like execution, or custom `msg.sender` accounting, compare historical attacker/attack-contract state with local PoC state before choosing fresh local helpers.
