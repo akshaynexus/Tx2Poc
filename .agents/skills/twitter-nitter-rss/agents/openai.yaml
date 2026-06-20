@@ -1,0 +1,4 @@
+interface:
+  display_name: "Twitter Nitter RSS"
+  short_description: "Monitor X posts for attack alerts via keyless Nitter RSS"
+  default_prompt: "Use $twitter-nitter-rss to check configured X accounts for new attack-alert posts and extract transaction details."

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Manage twitter-browser-mcp polling checkpoints."""
+"""Manage twitter-nitter-rss polling checkpoints."""
 
 from __future__ import annotations
 
