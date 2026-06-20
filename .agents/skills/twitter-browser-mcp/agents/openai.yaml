@@ -1,0 +1,4 @@
+interface:
+  display_name: "Twitter Browser MCP"
+  short_description: "Monitor X posts for attack alerts"
+  default_prompt: "Use $twitter-browser-mcp to check configured X accounts for new attack-alert tweets and extract transaction details."

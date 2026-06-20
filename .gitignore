@@ -34,5 +34,9 @@ cases/*
 # Selector cache
 .cache/
 
+# Twitter event monitor runtime
+twitter-events/*
+!twitter-events/.gitkeep
+
 # OS
 .DS_Store
