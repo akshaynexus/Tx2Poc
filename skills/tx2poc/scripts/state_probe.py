@@ -5,7 +5,7 @@ import json
 from collections.abc import Callable
 from typing import Any, Literal, NamedTuple
 
-from trace_tx import canonical_chain, hex_to_int, hex_words, rpc_call, rpc_url
+from trace_tx import canonical_chain, hex_to_int, hex_words, rpc_call, rpc_endpoint, resolve_source
 
 
 BALANCE_OF_SELECTOR = "0x70a08231"
@@ -258,10 +258,12 @@ def probe_state(
     custom_views: list[CustomView],
     contracts: list[str] | None = None,
     address_views: list[AddressView] | None = None,
+    source: str | None = None,
 ) -> dict[str, Any]:
     chain = canonical_chain(chain)
     block_tag = normalize_block(block)
-    url = rpc_url(chain)
+    resolved_source = resolve_source(source, chain)
+    url = rpc_endpoint(chain, resolved_source)
     normalized_spenders = unique_addresses(spenders)
     normalized_addresses = unique_addresses(addresses)
     report = {
@@ -335,6 +337,12 @@ def main(argv: list[str] | None = None) -> int:
         help="Custom address-returning helper view. Default arg kind is address; use :none for owner()/admin().",
     )
     parser.add_argument("--markdown", action="store_true", help="Print markdown instead of JSON")
+    parser.add_argument(
+        "--source",
+        choices=["auto", "alchemy", "blockscout"],
+        default="auto",
+        help="Trace data source. 'auto' (default) uses Alchemy when ALCHEMY_API_KEY is set, otherwise keyless Blockscout.",
+    )
     args = parser.parse_args(argv)
 
     try:
@@ -354,6 +362,7 @@ def main(argv: list[str] | None = None) -> int:
         custom_views,
         args.contract,
         address_views,
+        args.source,
     )
     if args.markdown:
         print(render_markdown(report), end="")

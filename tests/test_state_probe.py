@@ -138,10 +138,6 @@ def test_probe_state_uses_rpc_calls_without_network(monkeypatch: pytest.MonkeyPa
 
     calls: list[tuple[str, list[object]]] = []
 
-    def fake_rpc_url(chain: str) -> str:
-        assert chain == "ethereum"
-        return "mock://rpc"
-
     def fake_rpc_call(url: str, method: str, params: list[object]) -> str:
         assert url == "mock://rpc"
         calls.append((method, params))
@@ -159,7 +155,8 @@ def test_probe_state_uses_rpc_calls_without_network(monkeypatch: pytest.MonkeyPa
                 return "0x03"
         raise AssertionError(f"unexpected call {method} {params}")
 
-    monkeypatch.setattr(state_probe, "rpc_url", fake_rpc_url)
+    monkeypatch.setattr(state_probe, "rpc_endpoint", lambda chain, source: "mock://rpc")
+    monkeypatch.setattr(state_probe, "resolve_source", lambda source, chain: "blockscout")
     monkeypatch.setattr(state_probe, "rpc_call", fake_rpc_call)
 
     report = state_probe.probe_state("eth", "1", [address], [token], [spender], [("creditOf", "0x75807250")])
@@ -186,10 +183,6 @@ def test_probe_state_uses_address_returning_contract_views(monkeypatch: pytest.M
 
     calls: list[tuple[str, list[object]]] = []
 
-    def fake_rpc_url(chain: str) -> str:
-        assert chain == "bsc"
-        return "mock://rpc"
-
     def fake_rpc_call(url: str, method: str, params: list[object]) -> str:
         assert url == "mock://rpc"
         calls.append((method, params))
@@ -206,7 +199,8 @@ def test_probe_state_uses_address_returning_contract_views(monkeypatch: pytest.M
                 return encode_address_result(parent)
         raise AssertionError(f"unexpected call {method} {params}")
 
-    monkeypatch.setattr(state_probe, "rpc_url", fake_rpc_url)
+    monkeypatch.setattr(state_probe, "rpc_endpoint", lambda chain, source: "mock://rpc")
+    monkeypatch.setattr(state_probe, "resolve_source", lambda source, chain: "blockscout")
     monkeypatch.setattr(state_probe, "rpc_call", fake_rpc_call)
 
     report = state_probe.probe_state(
