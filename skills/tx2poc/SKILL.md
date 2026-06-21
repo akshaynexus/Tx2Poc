@@ -151,7 +151,7 @@ Non-user-facing AI-owned files:
 
 Write `metadata.json` after deciding:
 
-- `attacker`: tx sender or final profit receiver.
+- `attacker`: tx sender or final profit receiver. Set via `attacker = <address>` in `setUp()`.
 - `attack_contract`: attacker-controlled contract driving the call track.
 - `vulnerable_contract`: real vulnerable implementation/source address when a proxy is confirmed; otherwise the protocol address whose behavior is exploited.
 - `victim`: fund-losing account/entity only when distinct and trace-supported.
@@ -178,6 +178,10 @@ Detailed format and quality rules live in `$SKILL_DIR/references/good_poc_rules.
 
 - Start from `$SKILL_DIR/references/poc_template.sol`; import shared helpers only when used, and check `../interface.sol` before writing common local interfaces.
 - Name the main test contract `ContractTest` and put the `BaseTestWithBalanceLog` contract before helper contracts.
+- Set `attacker = <address>` in `setUp()` for the attacker EOA; do not use file-level `address constant ATTACKER`. The `attacker` field from `BaseTestWithBalanceLog` defaults to `address(this)` when left as `address(0)`.
+- Set `fundingToken` in `setUp()` to the profit token (or `address(0)` for native coin). Use the `balanceLog` modifier on `testExploit()` to log before/after balances.
+- For multi-token exploits, set `multiAssetLog = true` and populate `fundingTokens[]` via `_addFundingToken(token)` or `_addFundingTokens(tokens[])`. The `balanceLog` modifier logs all tracked tokens automatically.
+- For logging a specific address's balances (e.g. a separate profit contract), use `balanceLog2(address)` instead of `balanceLog`.
 - Fork at `tx_block - 1` with `vm.createSelectFork("<chain-alias>", forkBlock);`. Do not build provider URLs in Solidity.
 - Treat unresolved core identity, ABI/source, helper behavior, or address-sensitive behavior as a blocker.
 - Prefer typed, readable reconstruction over raw transaction input, large calldata blobs, or opaque replay.
